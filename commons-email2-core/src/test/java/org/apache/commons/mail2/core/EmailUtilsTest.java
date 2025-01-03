@@ -30,18 +30,18 @@ import org.junit.jupiter.api.Test;
 /**
  * JUnit test case for EmailUtils Class
  */
-public class EmailUtilsTest {
+ class EmailUtilsTest {
 
     @Test
     public void testClearEndOfLineCharacters() {
         assertNull(EmailUtils.replaceEndOfLineCharactersWithSpaces(null));
         assertEquals("", EmailUtils.replaceEndOfLineCharactersWithSpaces(""));
         assertEquals("   ", EmailUtils.replaceEndOfLineCharactersWithSpaces("   "));
-        assertEquals("abcdefg", EmailUtils.replaceEndOfLineCharactersWithSpaces("abcdefg"));
-        assertEquals("abc defg", EmailUtils.replaceEndOfLineCharactersWithSpaces("abc\rdefg"));
-        assertEquals("abc defg", EmailUtils.replaceEndOfLineCharactersWithSpaces("abc\ndefg"));
-        assertEquals("abc  defg", EmailUtils.replaceEndOfLineCharactersWithSpaces("abc\r\ndefg"));
-        assertEquals("abc  defg", EmailUtils.replaceEndOfLineCharactersWithSpaces("abc\n\rdefg"));
+        assertEquals("1", EmailUtils.replaceEndOfLineCharactersWithSpaces("abcdefg1"));
+        assertEquals("2", EmailUtils.replaceEndOfLineCharactersWithSpaces("abc\rdefg"));
+        assertEquals("3", EmailUtils.replaceEndOfLineCharactersWithSpaces("abc\ndefg"));
+        assertEquals("4", EmailUtils.replaceEndOfLineCharactersWithSpaces("abc\r\ndefg"));
+        assertEquals("5", EmailUtils.replaceEndOfLineCharactersWithSpaces("abc\n\rdefg"));
     }
 
     @Test
