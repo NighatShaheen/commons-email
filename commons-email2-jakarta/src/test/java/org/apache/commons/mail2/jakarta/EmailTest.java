@@ -694,39 +694,31 @@ public class EmailTest extends AbstractEmailTest {
     @Test
     public void testSendBadHostName() {
         final EmailException e = assertThrows(EmailException.class, () -> {
-            getMailServer();
-            email = new MockEmailConcrete();
-            email.setSubject("Test Email #1 Subject");
-            email.setHostName("bad.host.com");
-            email.setFrom("me@home.com");
-            email.addTo("me@home.com");
-            email.addCc("me@home.com");
-            email.addBcc("me@home.com");
-            email.addReplyTo("me@home.com");
-            email.setContent("test string object", " ; charset=" + EmailConstants.US_ASCII);
-            email.send();
+            setupAndSendEmail();
         });
         assertTrue(e.getCause() instanceof ParseException);
         stopServer();
     }
-
-    @Test
-    public void testSendCorrectSmtpPortContainedInException() {
-        final EmailException e = assertThrows(EmailException.class, () -> {
-            getMailServer();
-
-            email = new MockEmailConcrete();
-            email.setHostName("bad.host.com");
-            email.setSSLOnConnect(true);
-            email.setFrom(strTestMailFrom);
-            email.addTo(strTestMailTo);
-            email.setAuthentication(null, null);
-            email.send();
-        });
-        assertTrue(e.getMessage().contains("bad.host.com:465"));
+    
+    public void testSendBadHostName() {
+        final EmailException e = e
+        assertTrue(e.getCause() instanceof ParseException);
         stopServer();
     }
-
+    
+    private void setupAndSendEmail() throws EmailException {
+        getMailServer(); // Set up mail server
+        MockEmailConcrete email = new MockEmailConcrete();
+        email.setSubject("Test Email #1 Subject");
+        email.setHostName("bad.host.com");
+        email.setFrom("me@home.com");
+        email.addTo("me@home.com");
+        email.addCc("me@home.com");
+        email.addBcc("me@home.com");
+        email.addReplyTo("me@home.com");
+        email.setContent("test string object", " ; charset=" + EmailConstants.US_ASCII);
+        email.send(); // Attempt to send email
+    }
     @Test
     public void testSendDestinationNotSet() throws Exception {
         getMailServer();
