@@ -502,87 +502,108 @@ public abstract class Email {
      */
     public void buildMimeMessage() throws EmailException {
         if (message != null) {
-            // [EMAIL-95] we assume that an email is not reused therefore invoking
-            // buildMimeMessage() more than once is illegal.
             throw new IllegalStateException("The MimeMessage is already built.");
         }
-
+    
         try {
             message = createMimeMessage(getMailSession());
-
-            if (EmailUtils.isNotEmpty(subject)) {
-                if (EmailUtils.isNotEmpty(charset)) {
-                    message.setSubject(subject, charset);
-                } else {
-                    message.setSubject(subject);
-                }
-            }
-
-            // update content type (and encoding)
-            updateContentType(contentType);
-
-            if (content != null) {
-                if (EmailConstants.TEXT_PLAIN.equalsIgnoreCase(contentType) && content instanceof String) {
-                    // EMAIL-104: call explicitly setText to use default mime charset
-                    // (property "mail.mime.charset") in case none has been set
-                    message.setText(content.toString(), charset);
-                } else {
-                    message.setContent(content, contentType);
-                }
-            } else if (emailBody != null) {
-                if (contentType == null) {
-                    message.setContent(emailBody);
-                } else {
-                    message.setContent(emailBody, contentType);
-                }
-            } else {
-                message.setText("");
-            }
-
-            if (fromAddress != null) {
-                message.setFrom(fromAddress);
-            } else if (session.getProperty(EmailConstants.MAIL_SMTP_FROM) == null && session.getProperty(EmailConstants.MAIL_FROM) == null) {
-                throw new EmailException("From address required");
-            }
-
-            if (toList.size() + ccList.size() + bccList.size() == 0) {
-                throw new EmailException("At least one receiver address required");
-            }
-
-            if (!EmailUtils.isEmpty(toList)) {
-                message.setRecipients(Message.RecipientType.TO, toInternetAddressArray(toList));
-            }
-
-            if (!EmailUtils.isEmpty(ccList)) {
-                message.setRecipients(Message.RecipientType.CC, toInternetAddressArray(ccList));
-            }
-
-            if (!EmailUtils.isEmpty(bccList)) {
-                message.setRecipients(Message.RecipientType.BCC, toInternetAddressArray(bccList));
-            }
-
-            if (!EmailUtils.isEmpty(replyList)) {
-                message.setReplyTo(toInternetAddressArray(replyList));
-            }
-
-            if (!EmailUtils.isEmpty(headers)) {
-                for (final Map.Entry<String, String> entry : headers.entrySet()) {
-                    final String foldedValue = createFoldedHeaderValue(entry.getKey(), entry.getValue());
-                    message.addHeader(entry.getKey(), foldedValue);
-                }
-            }
-
-            if (message.getSentDate() == null) {
-                message.setSentDate(getSentDate());
-            }
-
-            if (popBeforeSmtp) {
-                // TODO Why is this not a Store leak? When to close?
-                final Store store = session.getStore("pop3");
-                store.connect(popHost, popUsername, popPassword);
-            }
+            setSubject();
+            updateContent();
+            setFromAddress();
+            validateRecipientAddresses();
+            setRecipients();
+            setReplyTo();
+            addHeaders();
+            setSentDate();
+            handlePopBeforeSmtp();
         } catch (final MessagingException e) {
             throw new EmailException(e);
+        }
+    }
+    
+    private void setSubject() throws MessagingException {
+        if (EmailUtils.isNotEmpty(subject)) {
+            if (EmailUtils.isNotEmpty(charset)) {
+                message.setSubject(subject, charset);
+            } else {
+                message.setSubject(subject);
+            }
+        }
+    }
+    
+    private void updateContent() throws MessagingException {
+        updateContentType(contentType);
+    
+        if (content != null) {
+            if (EmailConstants.TEXT_PLAIN.equalsIgnoreCase(contentType) && content instanceof String) {
+                message.setText(content.toString(), charset);
+            } else {
+                message.setContent(content, contentType);
+            }
+        } else if (emailBody != null) {
+            if (contentType == null) {
+                message.setContent(emailBody);
+            } else {
+                message.setContent(emailBody, contentType);
+            }
+        } else {
+            message.setText("");
+        }
+    }
+    
+    private void setFromAddress() throws EmailException, MessagingException {
+        if (fromAddress != null) {
+            message.setFrom(fromAddress);
+        } else if (session.getProperty(EmailConstants.MAIL_SMTP_FROM) == null
+                && session.getProperty(EmailConstants.MAIL_FROM) == null) {
+            throw new EmailException("From address required");
+        }
+    }
+    
+    private void validateRecipientAddresses() throws EmailException {
+        if (toList.size() + ccList.size() + bccList.size() == 0) {
+            throw new EmailException("At least one receiver address required");
+        }
+    }
+    
+    private void setRecipients() throws MessagingException {
+        if (!EmailUtils.isEmpty(toList)) {
+            message.setRecipients(Message.RecipientType.TO, toInternetAddressArray(toList));
+        }
+        if (!EmailUtils.isEmpty(ccList)) {
+            message.setRecipients(Message.RecipientType.CC, toInternetAddressArray(ccList));
+        }
+        if (!EmailUtils.isEmpty(bccList)) {
+            message.setRecipients(Message.RecipientType.BCC, toInternetAddressArray(bccList));
+        }
+    }
+    
+    private void setReplyTo() throws MessagingException {
+        if (!EmailUtils.isEmpty(replyList)) {
+            message.setReplyTo(toInternetAddressArray(replyList));
+        }
+    }
+    
+    private void addHeaders() throws MessagingException {
+        if (!EmailUtils.isEmpty(headers)) {
+            for (final Map.Entry<String, String> entry : headers.entrySet()) {
+                final String foldedValue = createFoldedHeaderValue(entry.getKey(), entry.getValue());
+                message.addHeader(entry.getKey(), foldedValue);
+            }
+        }
+    }
+    
+    private void setSentDate() throws MessagingException {
+        if (message.getSentDate() == null) {
+            message.setSentDate(getSentDate());
+        }
+    }
+    
+    private void handlePopBeforeSmtp() throws MessagingException {
+        if (popBeforeSmtp) {
+            final Store store = session.getStore("pop3");
+            store.connect(popHost, popUsername, popPassword);
+            // TODO: Properly handle Store cleanup to avoid leaks.
         }
     }
 
