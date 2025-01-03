@@ -141,9 +141,12 @@ public class EmailException extends Exception {
      * @param out the {@code PrintWriter} to use for output
      */
     @Override
-    public void printStackTrace(final PrintWriter out) {
-        synchronized (out) {
-            super.printStackTrace(out);
+    
+        public void printStackTrace(final PrintWriter out) {
+            // Use an explicit lock object if synchronization is necessary
+            synchronized (this) {
+                super.printStackTrace(out);
+            }
         }
     }
 }
