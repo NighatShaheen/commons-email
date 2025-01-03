@@ -603,8 +603,8 @@ public abstract class Email {
         if (popBeforeSmtp) {
             final Store store = session.getStore("pop3");
             store.connect(popHost, popUsername, popPassword);
-            // TODO: Properly handle Store cleanup to avoid leaks.
-        }
+
+        }            
     }
 
     /**

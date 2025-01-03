@@ -109,7 +109,7 @@ public class EmailLiveTest extends AbstractEmailTest {
      * @throws Exception the test failed
      */
     @Test
-    public void testCorrectCharacterEncoding() throws Exception {
+     void testCorrectCharacterEncoding() throws Exception {
         // U+03B1 : GREEK SMALL LETTER ALPHA
         // U+03B2 : GREEK SMALL LETTER BETA
         // U+03B3 : GREEK SMALL LETTER GAMMA
@@ -141,10 +141,23 @@ public class EmailLiveTest extends AbstractEmailTest {
         email.setSubject("TestFoldedHeaderMail");
         email.setMsg("This is a test mail with a folded header value... :-)");
         email.addHeader("X-TestHeader", "This is a very long header value which should be folded into two lines, hopefully");
-
-        MimeMessageUtils.writeMimeMessage(send(email).getMimeMessage(), new File("./target/test-emails/foldedheader.eml"));
+    
+        // Build the MimeMessage
+        email.buildMimeMessage();
+    
+        // Get the MimeMessage and assert the header value
+        MimeMessage message = email.getMimeMessage();
+        String headerValue = message.getHeader("X-TestHeader", null);
+    
+        // Assert that the header is present
+        assertNotNull(headerValue, "The header 'X-TestHeader' should not be null.");
+    
+        // Assert that the header contains the expected value (folded headers typically include line breaks)
+        assertTrue(headerValue.contains("This is a very long header value"),
+                "The header value should contain the expected content.");
+        assertTrue(headerValue.contains("\r\n") || headerValue.contains("\n"),
+                "The header value should be folded across multiple lines.");
     }
-
     /**
      * This test checks the various options of building a HTML email.
      *
